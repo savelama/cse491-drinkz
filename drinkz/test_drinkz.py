@@ -237,6 +237,13 @@ def test_script_load_bottle_types_2():
 
     assert exit_code == 0, 'non zero exit code %s' % exit_code
 
+def test_script_load_inventory_1():
+    scriptpath = 'bin/load-liquor-inventory'
+    module = imp.load_source('llt', scriptpath)
+    exit_code = module.main([scriptpath, 'test-data/bottle-types-data-1.txt', 'test-data/inventory-data-1.txt'])
+
+    assert exit_code == 0, 'non zero exit code %s' % exit_code
+
 def test_get_liquor_inventory():
     db._reset_db()
 
