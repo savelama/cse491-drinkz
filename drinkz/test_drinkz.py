@@ -62,6 +62,42 @@ def test_bulk_load_inventory_1():
     assert db.check_inventory('Johnnie Walker', 'Black Label')
     assert n == 1, n
 
+def test_bulk_load_inventory_2():
+    #handles commented out lines
+    db._reset_db()
+
+    db.add_bottle_type('Johnnie Walker', 'Black Label', 'blended scotch')
+    
+    data = "#Johnnie Walker,Black Label,1000 ml"
+    fp = StringIO(data)                 # make this look like a file handle
+    n = load_bulk_data.load_inventory(fp)
+
+    assert n == 0, n
+
+def test_bulk_load_inventory_3():
+    #handles whitespace lines
+    db._reset_db()
+
+    db.add_bottle_type('Johnnie Walker', 'Black Label', 'blended scotch')
+    
+    data = "        "
+    fp = StringIO(data)                 # make this look like a file handle
+    n = load_bulk_data.load_inventory(fp)
+
+    assert n == 0, n
+
+def test_bulk_load_inventory_4():
+    #handles invalid lines
+    db._reset_db()
+
+    db.add_bottle_type('Johnnie Walker', 'Black Label', 'blended scotch')
+    
+    data = "Johnnie Walker,Black Label1000 ml"
+    fp = StringIO(data)                 # make this look like a file handle
+    n = load_bulk_data.load_inventory(fp)
+
+    assert n == 0, n
+
 def test_get_liquor_amount_2():
     db._reset_db()
 
@@ -84,13 +120,112 @@ def test_bulk_load_bottle_types_1():
     assert db._check_bottle_type_exists('Johnnie Walker', 'Black Label')
     assert n == 1, n
 
+def test_bulk_load_bottle_types_2():
+    #test handling commented out lines
+    db._reset_db()
+
+    data = "#Johnnie Walker,Black Label,blended scotch"
+    fp = StringIO(data)                 # make this look like a file handle
+    n = load_bulk_data.load_bottle_types(fp)
+
+    assert n == 0, n
+
+def test_bulk_load_bottle_types_3():
+    #test handling whitespace lines
+    db._reset_db()
+
+    data = "        "
+    fp = StringIO(data)                 # make this look like a file handle
+    n = load_bulk_data.load_bottle_types(fp)
+
+    assert n == 0, n
+
+def test_bulk_load_bottle_types_4():
+    #test handling invalid lines
+    db._reset_db()
+
+    data = "Johnnie Walker,Black Labelblended scotch"
+    fp = StringIO(data)                 # make this look like a file handle
+    n = load_bulk_data.load_bottle_types(fp)
+
+    assert n == 0, n
+
+def test_bulk_load_bottle_types_by_file_1():
+    #test bulk loading a good bottle types file
+    db._reset_db()
+
+    fp = open('test-data/bottle-types-data-1.txt')
+    n = load_bulk_data.load_bottle_types(fp)
+
+    assert db._check_bottle_type_exists('Johnnie Walker', 'Black Label')
+    assert n == 1, n
+
+def test_bulk_load_bottle_types_by_file_2():
+    #test bulk loading a bottle types file with commented and whitespace lines
+    db._reset_db()
+
+    fp = open('test-data/bottle-types-data-2.txt')
+    n = load_bulk_data.load_bottle_types(fp)
+
+    assert db._check_bottle_type_exists('Johnnie Walker', 'Black Label')
+    assert n == 1, n
+
+def test_bulk_load_bottle_types_by_file_3():
+    #test bulk loading an invalid bottle types file
+    db._reset_db()
+
+    fp = open('test-data/bottle-types-data-3.txt')
+    n = load_bulk_data.load_bottle_types(fp)
+
+    assert n == 1, n
+
+def test_bulk_load_inventory_by_file_1():
+    db._reset_db()
+
+    db.add_bottle_type('Johnnie Walker', 'Black Label', 'blended scotch')
+
+    fp = open('test-data/inventory-data-1.txt')
+    n = load_bulk_data.load_inventory(fp)
+
+    assert db.check_inventory('Johnnie Walker', 'Black Label')
+    assert n == 1, n
+
+def test_bulk_load_inventory_by_file_2():
+    db._reset_db()
+
+    db.add_bottle_type('Johnnie Walker', 'Black Label', 'blended scotch')
+    
+    fp = open('test-data/inventory-data-2.txt')
+    n = load_bulk_data.load_inventory(fp)
+
+    assert db.check_inventory('Johnnie Walker', 'Black Label')
+    assert n == 1, n
+
+def test_bulk_load_inventory_by_file_3():
+    db._reset_db()
+
+    db.add_bottle_type('Johnnie Walker', 'Black Label', 'blended scotch')
+    
+    fp = open('test-data/inventory-data-3.txt')
+    n = load_bulk_data.load_inventory(fp)
+
+    assert n == 1, n
+
 def test_script_load_bottle_types_1():
     scriptpath = 'bin/load-liquor-types'
     module = imp.load_source('llt', scriptpath)
     exit_code = module.main([scriptpath, 'test-data/bottle-types-data-1.txt'])
 
     assert exit_code == 0, 'non zero exit code %s' % exit_code
-    
+
+def test_script_load_bottle_types_2():
+    #test to handle ignoring comments and blanklines
+    scriptpath = 'bin/load-liquor-types'
+    module = imp.load_source('llt', scriptpath)
+    exit_code = module.main([scriptpath, 'test-data/bottle-types-data-2.txt'])
+
+    assert exit_code == 0, 'non zero exit code %s' % exit_code
+
 def test_get_liquor_inventory():
     db._reset_db()
 

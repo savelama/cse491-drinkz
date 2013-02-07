@@ -1,0 +1,3 @@
+#example of an invalid file that should raise an exception
+Johnnie Walker,Black Label blended scotch
+Johnnie Walker,Black Label,blended scotch

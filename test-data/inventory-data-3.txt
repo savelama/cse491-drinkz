@@ -1,0 +1,3 @@
+#example of an invalid file that should raise an exception
+Johnnie Walker,Black Label 1000ml
+Johnnie Walker,Black Label,1000ml
