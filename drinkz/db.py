@@ -114,6 +114,11 @@ def get_liquor_inventory():
     for (m, l) in _inventory_db:
         yield m, l
 
+def get_bottle_types():
+    "Retrieve all bottle types in our database, in tuple form (mfg, liquor, type)"
+    for (m, l, t) in _bottle_types_db:
+        yield m, l, t
+
 def add_recipe(r):
     "Add a recipe to our database. If the recipe already exists, raise an exception"
     if (r._name not in _recipes_db):
