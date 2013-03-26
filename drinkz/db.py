@@ -43,32 +43,8 @@ def add_to_inventory(mfg, liquor, amount):
         err = "Missing liquor: manufacturer '%s', name '%s'" % (mfg, liquor)
         raise LiquorMissing(err)
 
-    try:
-        (amt, unit) = amount.split()
-        amt = float(amt)
-    except ValueError:
-        print "ERROR: ValueError has occurred! Moving on..."
-    except:
-        print "ERROR! Moving on..."
-        pass
-
-    if unit == 'ml':
-        amt_to_add += amt
-
-    elif unit == 'oz':
-        amt = amt * 29.5735
-        amt_to_add += amt
-
-    elif unit == 'gallon':
-        amt = amt * 3785.41
-        amt_to_add += amt
-
-    elif unit == 'liter':
-        amt = amt * 1000
-        amt_to_add += amt
-
-    else:
-        print "Unit not recognized! Moving on..."
+    amt = convert_to_ml(amount)
+    amt_to_add += amt
 
     if (mfg, liquor) in _inventory_db:
         currentAmt = _inventory_db[(mfg, liquor)]
@@ -139,7 +115,15 @@ def get_recipe(name):
         return _recipes_db[name]
 
 def convert_to_ml(amount):
-    amt, unit = amount.split()
+    try:
+        (amt, unit) = amount.split()
+        amt = float(amt)
+        unit = unit.lower()
+    except ValueError:
+        print "ERROR: ValueError has occurred! Moving on..."
+    except:
+        print "ERROR! Moving on..."
+        pass
 
     if unit == 'ml':
         amt = float(amt)
