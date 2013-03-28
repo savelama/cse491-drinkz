@@ -33,14 +33,39 @@ class SimpleApp(object):
             return ["No path %s found" % path]
 
         return fn(environ, start_response)
+
+    def load_db(self, filename):
+        drinkz.db.load_db(filename)
             
     def index(self, environ, start_response):
         data = """
-Visit:<br />
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Index Page</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+<script type="text/javascript">
+function showAlertButton() {
+    alert("You pressed an alert button!");
+}
+</script>
+</head>
+<body>
+<h1>Index Page</h1>
+<p>
+<br />
 <a href='/recipes'>List Recipes</a><br />
 <a href='/inventory'>List Inventory</a><br />
 <a href='/liquor_types'>List Liquor Types</a><br/>
-<a href='/form'>Convert Liquor Amount Form</a>
+<a href='/form'>Convert Liquor Amount Form</a><br/><br/>
+<input type="button" onclick="showAlertButton()" value="Show Alert Box"/>
+</p>
+</body>
+</html>
 """
         start_response('200 OK', list(html_headers))
         return [data]
@@ -48,7 +73,18 @@ Visit:<br />
     def recipes(self, environ, start_response):
         content_type = 'text/html'
         text = """
-<h1>Matthew Savela's HW4 Output -- List of Recipes</h1>
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Recipe List</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>List of Recipes</h1>
 <ul>
     <li><a href='/'>Home</a></li>
     <li><a href='/recipes'>List Recipes</a></li>
@@ -69,6 +105,8 @@ Visit:<br />
             text += "\t<li>" + r._name + " - " + haveIngredients + "</li>\n"
         text += '</ul>'
 
+        text += '</body></html>'
+
         data = text
         start_response('200 OK', list(html_headers))
         return [data]
@@ -76,7 +114,17 @@ Visit:<br />
     def liquor_types(self, environ, start_response):
         content_type = 'text/html'
         text = """
-<h1>Matthew Savela's HW4 Output -- List of Liquor Types</h1>
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Liquor Types List</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>List of Liquor Types</h1>
 <ul>
     <li><a href='/'>Home</a></li>
     <li><a href='/recipes'>List Recipes</a></li>
@@ -86,10 +134,11 @@ Visit:<br />
 <hr />
 <ul>
 """
-        bottle_types = list(drinkz.db.get_bottle_types())
+        bottle_types = list(drinkz.db.get_all_bottle_types())
         for (m, l, t) in bottle_types:
             text += "\t<li>" + t + "</li>\n"
         text += '</ul>'
+        text += '</body></html>'
 
         data = text
         start_response('200 OK', list(html_headers))
@@ -98,7 +147,18 @@ Visit:<br />
     def inventory(self, environ, start_response):
         content_type = 'text/html'
         text = """
-<h1>Matthew Savela's HW4 Output -- Liquor Inventory</h1>
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Liquor Inventory</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>Liquor Inventory</h1>
 <ul>
     <li><a href='/'>Home</a></li>
     <li><a href='/recipes'>List Recipes</a></li>
@@ -113,6 +173,7 @@ Visit:<br />
             amount = drinkz.db.get_liquor_amount(m,l)
             text += "\t<li>" + m + " - " + l + " - " + str(amount) + "ml</li>\n"
         text += '</ul>'
+        text += '</body></html>'
 
         data = text
         start_response('200 OK', list(html_headers))
@@ -137,11 +198,29 @@ Visit:<br />
         results = urlparse.parse_qs(formdata)
 
         amountToConvert = results['liquorAmount'][0]
-        amountConverted = drinkz.db.convert_to_ml(amountToConvert)
+
+        number, unit = amountToConvert.split();
+
+        amountConverted = drinkz.db.ConvertToMilliters(number, unit)
         amountConverted = str(amountConverted) + ' ml'
 
         content_type = 'text/html'
-        data = "Original amount: %s; Amount converted to mL: %s.  <a href='./'>return to index</a>" % (amountToConvert, amountConverted)
+        data = """
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Conversion Results</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>Conversion Results</h1><br/>
+<p>
+        """
+        data += "Original amount: %s; Amount converted to mL: %s.  <br/><br/><a href='./'>return to index</a>" % (amountToConvert, amountConverted)
+        data += "</p></body></html>"
 
         start_response('200 OK', list(html_headers))
         return [data]
@@ -194,10 +273,24 @@ Visit:<br />
     
 def form():
     return """
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Conversion Form</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>Convert an Amount to Milliliters</h1><br/>
 <form action='recv'>
 Enter amount of liquor: <input type='text' name='liquorAmount' size'20'>
 <input type='submit'>
 </form>
+</body>
+</html>
 """
 
 if __name__ == '__main__':

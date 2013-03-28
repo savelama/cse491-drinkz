@@ -10,7 +10,13 @@ if __name__ == '__main__':
     port = random.randint(8000, 9999)
     
     app = SimpleApp()
-    
+
+    try:
+    	app.load_db('bin/drinkz_db')
+    except IOError:
+    	print "Error! Database file not found -- no data imported."
+    	return
+    	    
     httpd = make_server('', port, app)
     print "Serving on port %d..." % port
     print "Try using a Web browser to go to http://%s:%d/" % \
