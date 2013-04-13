@@ -1,4 +1,5 @@
-import drinkz.recipes
+import recipes
+import db
 
 """
 Database functionality for drinkz information.

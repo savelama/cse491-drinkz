@@ -2,7 +2,8 @@
 from wsgiref.simple_server import make_server
 import urlparse
 import simplejson
-import drinkz.db
+import db
+import recipes
 
 dispatch = {
     '/' : 'index',
@@ -11,13 +12,20 @@ dispatch = {
     '/liquor_types' : 'liquor_types',
     '/error' : 'error',
     '/form' : 'form',
+    '/addliquortype' : 'addliquortype',
+    '/addtoinventory': 'addtoinventory',
+    '/addrecipe': 'addrecipe',
     '/recv' : 'recv',
+    '/recv2': 'recv2',
+    '/recv3': 'recv3',
+    '/recv4': 'recv4',
     '/rpc'  : 'dispatch_rpc'
 }
 
 html_headers = [('Content-type', 'text/html')]
 
 class SimpleApp(object):
+
     def __call__(self, environ, start_response):
 
         path = environ['PATH_INFO']
@@ -35,7 +43,7 @@ class SimpleApp(object):
         return fn(environ, start_response)
 
     def load_db(self, filename):
-        drinkz.db.load_db(filename)
+        db.load_db(filename)
             
     def index(self, environ, start_response):
         data = """
@@ -61,7 +69,10 @@ function showAlertButton() {
 <a href='/recipes'>List Recipes</a><br />
 <a href='/inventory'>List Inventory</a><br />
 <a href='/liquor_types'>List Liquor Types</a><br/>
-<a href='/form'>Convert Liquor Amount Form</a><br/><br/>
+<a href='/form'>Convert Liquor Amount Form</a><br/>
+<a href='/addliquortype'>Add a liquor type</a><br/>
+<a href='/addtoinventory'>Add liquor to inventory</a><br/>
+<a href='/addrecipe'>Add a recipe</a><br/>
 <input type="button" onclick="showAlertButton()" value="Show Alert Box"/>
 </p>
 </body>
@@ -94,7 +105,7 @@ body { font-size:14px; }
 <hr />
 <ul>
 """
-        recipes = list(drinkz.db.get_all_recipes())
+        recipes = list(db.get_all_recipes())
         for r in recipes:
             missing_ingredients = r.need_ingredients()
             if len(missing_ingredients) == 0:
@@ -134,7 +145,7 @@ body { font-size:14px; }
 <hr />
 <ul>
 """
-        bottle_types = list(drinkz.db.get_all_bottle_types())
+        bottle_types = list(db.get_all_bottle_types())
         for (m, l, t) in bottle_types:
             text += "\t<li>" + t + "</li>\n"
         text += '</ul>'
@@ -168,9 +179,9 @@ body { font-size:14px; }
 <hr />
 <ul>
 """
-        liquor_inventory = list(drinkz.db.get_liquor_inventory())
+        liquor_inventory = list(db.get_liquor_inventory())
         for (m,l) in liquor_inventory:
-            amount = drinkz.db.get_liquor_amount(m,l)
+            amount = db.get_liquor_amount(m,l)
             text += "\t<li>" + m + " - " + l + " - " + str(amount) + "ml</li>\n"
         text += '</ul>'
         text += '</body></html>'
@@ -192,16 +203,33 @@ body { font-size:14px; }
 
         start_response('200 OK', list(html_headers))
         return [data]
+
+    def addrecipe(self, environ, start_response):
+        data = formAddRecipe()
+
+        start_response('200 OK', list(html_headers))
+        return [data]
+
+    def addliquortype(self, environ, start_response):
+        data = formAddLiquorType()
+
+        start_response('200 OK', list(html_headers))
+        return [data]
+
+    def addtoinventory(self, environ, start_response):
+        data = formAddToInventory()
+
+        start_response('200 OK', list(html_headers))
+        return [data]
    
+   # Used to convert amount to milliliters
     def recv(self, environ, start_response):
         formdata = environ['QUERY_STRING']
         results = urlparse.parse_qs(formdata)
 
         amountToConvert = results['liquorAmount'][0]
 
-        number, unit = amountToConvert.split();
-
-        amountConverted = drinkz.db.ConvertToMilliters(number, unit)
+        amountConverted = db.convert_to_ml(amountToConvert)
         amountConverted = str(amountConverted) + ' ml'
 
         content_type = 'text/html'
@@ -224,6 +252,111 @@ body { font-size:14px; }
 
         start_response('200 OK', list(html_headers))
         return [data]
+
+    # Used to add liquor types to the database
+    def recv2(self, environ, start_response):
+        formdata = environ['QUERY_STRING']
+        results = urlparse.parse_qs(formdata)
+
+        liquorMfg = results['liquorMfg'][0]
+        liquorName = results['liquorName'][0]
+        liquorType = results['liquorType'][0]
+
+        db.add_bottle_type(liquorMfg, liquorName, liquorType)
+
+        content_type = 'text/html'
+        data = """
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Liquor Type Added</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>Liquor Type Successfully Added!</h1><br/>
+<a href='./'>Return to index</a>
+<p>
+        """
+        start_response('200 OK', list(html_headers))
+        return [data]
+
+    # Used to add liquor types to the database
+    def recv3(self, environ, start_response):
+        formdata = environ['QUERY_STRING']
+        results = urlparse.parse_qs(formdata)
+
+        liquorMfg = results['liquorMfg'][0]
+        liquorName = results['liquorName'][0]
+        liquorAmount = results['liquorAmount'][0]
+
+        bottleTypeExists = db._check_bottle_type_exists(liquorMfg, liquorName)
+        if(bottleTypeExists == True):
+            db.add_to_inventory(liquorMfg, liquorName, liquorAmount)
+
+        content_type = 'text/html'
+        data = """
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Liquor Amount Added</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>"""
+        if(bottleTypeExists == True):
+            data += "<h1>Liquor Successfully Added to Inventory!</h1><br/>"
+        else:
+            data += "<h1>Error! Liquor bottle type could not be found. Liquor not added.</h1>"
+        data += "<a href='./'>Return to index</a></body></html>"
+
+
+        start_response('200 OK', list(html_headers))
+        return [data]
+
+    # Used to add recipes to the database
+    def recv4(self, environ, start_response):
+        formdata = environ['QUERY_STRING']
+        results = urlparse.parse_qs(formdata)
+
+        recipeName = results['recipeName'][0]
+        ingredients = results['ingredients'][0].split(',')
+
+        Ingredients = []
+        i = 0
+        while i < len(ingredients):
+            Ingredients.append((ingredients[i], ingredients[i+1]))
+            i+=2
+
+        db.add_recipe(recipes.Recipe(recipeName, Ingredients))
+
+        content_type = 'text/html'
+        data = """
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Liquor Amount Added</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body><h1>Liquor Successfully Added to Inventory!"""
+
+        #data += Ingredients[1][0]
+        data += """
+</h1><br/>
+</body>
+</html>"""
+
+        start_response('200 OK', list(html_headers))
+        return [data]
+
+
 
     def dispatch_rpc(self, environ, start_response):
         # POST requests deliver input data via a file-like handle,
@@ -270,6 +403,44 @@ body { font-size:14px; }
 
     def rpc_add(self, a, b):
         return int(a) + int(b)
+
+    # RPC Function for Homework #5
+
+    def rpc_ConvertToMilliters(self, amount):
+        return db.convert_to_ml(amount);
+
+    def rpc_AddToInventory(self, mfg, liquor, amount):
+        db.add_to_inventory(mfg, liquor, amount);
+
+    def rpc_AddLiquorType(self, mfg, liquorName, liquorType):
+        db.add_bottle_type(mfg, liquorName, liquorType);
+
+    def rpc_AddRecipe(self, recipeName, ingredients):
+
+        ingredients = ingredients.split(',')
+        Ingredients = []
+        i = 0
+        while i < len(ingredients):
+            Ingredients.append((ingredients[i], ingredients[i+1]))
+            i+=2
+
+        db.add_recipe(recipes.Recipe(recipeName, Ingredients));
+
+    def rpc_GetLiquorTypes(self):
+        return list(db.get_bottle_types());
+
+    def rpc_GetLiquorInventory(self):
+        return list(db.get_liquor_inventory());
+
+    def rpc_GetRecipes(self):
+        recipes = list(db.get_all_recipes());
+        recipeNames = list()
+
+        for r in recipes:
+            recipeNames.append(r._name)
+
+        return recipeNames
+
     
 def form():
     return """
@@ -287,6 +458,79 @@ body { font-size:14px; }
 <h1>Convert an Amount to Milliliters</h1><br/>
 <form action='recv'>
 Enter amount of liquor: <input type='text' name='liquorAmount' size'20'>
+<input type='submit'>
+</form>
+</body>
+</html>
+"""
+
+def formAddToInventory():
+    return """
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Add To Inventory Form</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>Add Liquor to the Inventory Database</h1><br/>
+<form action='recv3'>
+<input type='hidden' name='formType' value='addLiquor'>
+Enter liquor manufacturer: <input type='text' name='liquorMfg' size'30'><br />
+Enter liquor name: <input type='text' name='liquorName' size'30'><br />
+Enter liquor amount: <input type='text' name='liquorAmount' size'30'><br/>
+<input type='submit'>
+</form>
+</body>
+</html>
+    """
+
+def formAddLiquorType():
+    return """
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Add Liquor Type Form</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>Add a Liquor Type to the Database</h1><br/>
+<form action='recv2'>
+<input type='hidden' name='formType' value='addLiquorType'>
+Enter liquor manufacturer: <input type='text' name='liquorMfg' size'30'><br />
+Enter liquor name: <input type='text' name='liquorName' size'30'><br />
+Enter liquor type: <input type='text' name='liquorType' size'30'><br />
+<input type='submit'>
+</form>
+</body>
+</html>
+"""
+
+def formAddRecipe():
+    return """
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Add Recipe Form</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body>
+<h1>Add a Recipe</h1><br/>
+<form action='recv4' name='formType' value='addRecipe'>
+Enter recipe name: <input type='text' name='recipeName' size'30'><br />
+Enter ingredients*: <input type='text' name='ingredients' size'100'><br />
+*Add recipe ingredients in the following format: ingredient, amount, ingredient, amount, etc.<br/>
+(e.g. "unflavored vodka,6 oz,vermouth,1.5 oz" )<br/><br/>
 <input type='submit'>
 </form>
 </body>

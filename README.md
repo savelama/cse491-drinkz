@@ -17,3 +17,6 @@ Hmmmm... a startup idea is born!
 Running the tests:
 
 To run the tests, 'nosetests'.  'nosetests -v' will give you the test names.
+
+HW4 Notes:
+	I worked with Eric Miller on this assignment.

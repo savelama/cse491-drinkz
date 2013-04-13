@@ -1,0 +1,20 @@
+------------------------------------------------
+Example Command
+------------------------------------------------
+Client Side: "python2.7 drinkz/client.py 8753 GET /recipes"
+Server Side: "python2.7 drinkz/server.py"
+
+
+NOTES:
+- 8753 is just whatever the port number is
+- There are many available paths, including:
+	/
+	/recipes
+	/inventory
+	/liquor_types
+	/convert_to_ml
+	/add_recipe
+	/add_liquor_type
+	/add_to_inventory
+	/error
+
