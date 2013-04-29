@@ -66,6 +66,9 @@ function showAlertButton() {
         data: JSON.stringify({method: 'showAlert', params: [], id:'0'}),
         success: function(data) {
             alert(data.result);
+        },
+        error: function(data) {
+            alert(data.error);
         }
     });
 }
