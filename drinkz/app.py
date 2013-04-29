@@ -63,7 +63,7 @@ function showAlertButton() {
         type: 'POST',
         url: '/rpc',
         dataType: 'json',
-        data: JSON.stringify({method: 'showAlert', params: [], id:'0'}),
+        data: JSON.stringify({method: 'showAlert', params: [], id: '0'}),
         success: function(data) {
             alert(data.result);
         },
