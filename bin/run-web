@@ -15,7 +15,7 @@ if __name__ == '__main__':
     	app.load_db('bin/drinkz_db')
     except IOError:
     	print "Error! Database file not found -- no data imported."
-    	return
+    	pass
     	    
     httpd = make_server('', port, app)
     print "Serving on port %d..." % port

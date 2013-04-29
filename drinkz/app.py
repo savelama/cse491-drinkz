@@ -56,9 +56,18 @@ class SimpleApp(object):
 h1 {text-decoration:underline; text-align:center; color:red;}
 body { font-size:14px; }
 </style>
+<script type='text/javascript' src='http://code.jquery.com/jquery-1.9.1.min.js'></script>
 <script type="text/javascript">
 function showAlertButton() {
-    alert("You pressed an alert button!");
+    $.ajax({
+        type: 'POST',
+        url: '/rpc',
+        dataType: 'json',
+        data: JSON.stringify({method: 'showAlert', params: [], id:'0'}),
+        success: function(data) {
+            alert(data.result);
+        }
+    });
 }
 </script>
 </head>
@@ -440,6 +449,9 @@ body { font-size:14px; }
             recipeNames.append(r._name)
 
         return recipeNames
+
+    def rpc_showAlert(self):
+        return "This is a JavaScript alert triggered by an AJAX call!";
 
     
 def form():
