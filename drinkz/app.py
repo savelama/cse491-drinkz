@@ -2,8 +2,10 @@
 from wsgiref.simple_server import make_server
 import urlparse
 import simplejson
+from Cookie import SimpleCookie
 import db
 import recipes
+import uuid
 
 dispatch = {
     '/' : 'index',
@@ -19,8 +21,14 @@ dispatch = {
     '/recv2': 'recv2',
     '/recv3': 'recv3',
     '/recv4': 'recv4',
-    '/rpc'  : 'dispatch_rpc'
+    '/rpc'  : 'dispatch_rpc',
+    '/login_1' : 'login1',
+    '/login1_process' : 'login1_process',
+    '/logout' : 'logout',
+    '/status' : 'status'
 }
+
+usernames = {}
 
 html_headers = [('Content-type', 'text/html')]
 
@@ -85,6 +93,9 @@ function showAlertButton() {
 <a href='/addliquortype'>Add a liquor type</a><br/>
 <a href='/addtoinventory'>Add liquor to inventory</a><br/>
 <a href='/addrecipe'>Add a recipe</a><br/>
+<a href='/login_1'>Login Page</a><br/>
+<a href='/logout'>Logout Page</a><br/>
+<a href='/status'>Status Page</a><br/>
 <input type="button" onclick="showAlertButton()" value="Show Alert Box"/>
 </p>
 </body>
@@ -369,6 +380,126 @@ body { font-size:14px; }
         return [data]
 
 
+    # Used to log in a user
+    def login1(self, environ, start_response):
+
+        content_type = 'text/html'
+        data = """
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Login Page</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body><h1>Login Page</h1><br/><br/>
+
+<form action='login1_process'>
+Username: <input type='text' name='name' size='15'>
+<input type='submit' value='log in'>
+</form>
+<br/><br/>
+<a href="/">Return to Index</a>
+
+</body>
+</html>"""
+
+
+        start_response('200 OK', list(html_headers))
+        return [data]
+
+    def login1_process(self, environ, start_response):
+        formdata = environ['QUERY_STRING']
+        results = urlparse.parse_qs(formdata)
+
+        name = results['name'][0]
+        content_type = 'text/html'
+
+        # authentication would go here -- is this a valid username/password,
+        # for example?
+
+        k = str(uuid.uuid4())
+        usernames[k] = name
+
+        headers = list(html_headers)
+        headers.append(('Location', '/status'))
+        headers.append(('Set-Cookie', 'name1=%s' % k))
+
+        start_response('302 Found', headers)
+        return ["Redirect to /status..."]
+
+    def logout(self, environ, start_response):
+        if 'HTTP_COOKIE' in environ:
+            c = SimpleCookie(environ.get('HTTP_COOKIE', ''))
+            if 'name1' in c:
+                key = c.get('name1').value
+                name1_key = key
+
+                if key in usernames:
+                    del usernames[key]
+                    print 'DELETING'
+
+        pair = ('Set-Cookie',
+                'name1=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT;')
+        headers = list(html_headers)
+        headers.append(('Location', '/status'))
+        headers.append(pair)
+
+        start_response('302 Found', headers)
+        return ["Redirect to /status..."]
+
+    def status(self, environ, start_response):
+        start_response('200 OK', list(html_headers))
+
+        name1 = ''
+        name1_key = '*empty*'
+        if 'HTTP_COOKIE' in environ:
+            c = SimpleCookie(environ.get('HTTP_COOKIE', ''))
+            if 'name1' in c:
+                key = c.get('name1').value
+                name1 = usernames.get(key, '')
+                name1_key = key
+
+        content_type = 'text/html'
+        data = """
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Status Page</title>
+<style type='text/css'>
+h1 {text-decoration:underline; text-align:center; color:red;}
+body { font-size:14px; }
+</style>
+</head>
+<body><h1>Status Page</h1><br/><br/><p>"""
+
+        if(name1_key != "*empty*"):
+            data += "Logged in as: "
+            data += name1
+            data += """
+    </p><br/>"""
+
+            data += """
+    <p>Your key is:
+            """
+            data += name1_key
+        else:
+            data += "You are logged out"
+        data += """
+ </p><br/><br/>
+<a href="/">Return to Index</a>
+</body>
+</html>"""
+
+
+        return [data]
+                
+        #title = 'login status'
+        #template = env.get_template('status.html')
+        #return str(template.render(locals()))
+
 
     def dispatch_rpc(self, environ, start_response):
         # POST requests deliver input data via a file-like handle,
@@ -472,7 +603,7 @@ body { font-size:14px; }
 <body>
 <h1>Convert an Amount to Milliliters</h1><br/>
 <form action='recv'>
-Enter amount of liquor: <input type='text' name='liquorAmount' size'20'>
+Enter amount of liquor: <input type='text' name='liquorAmount' size='20'>
 <input type='submit'>
 </form>
 </body>
