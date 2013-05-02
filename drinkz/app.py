@@ -168,7 +168,7 @@ body { font-size:14px; }
 <hr />
 <ul>
 """
-        bottle_types = list(db.get_all_bottle_types())
+        bottle_types = list(db.get_bottle_types())
         for (m, l, t) in bottle_types:
             text += "\t<li>" + t + "</li>\n"
         text += '</ul>'

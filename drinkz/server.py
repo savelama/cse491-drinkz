@@ -56,6 +56,10 @@ while True:
         environ['CONTENT_LENGTH'] = len(reqHeader[-1])
         environ['wsgi.input'] = StringIO(reqHeader[-1])
 
+        if '?' in reqPath:
+            reqPath, reqQueryString = reqPath.split('?', 1)
+            environ['QUERY_STRING'] = reqQueryString
+
         results = app_obj(environ, my_start_response);
 
         responseHeaders = []
@@ -72,35 +76,17 @@ while True:
         c.send(response)
 
     elif data[:3] == "GET":
+        splitLines = data.splitlines();
+        reqType, reqPath, reqProtocol = splitLines[0].split()
+
         status = "HTTP/1.0 "
         environ = {}
 
-        if '/recipes' in data[4:]:
-            environ['PATH_INFO'] = '/recipes'
-        elif '/inventory' in data[4:]:
-            environ['PATH_INFO'] = '/inventory'
-        elif '/liquor_types' in data[4:]:
-            environ['PATH_INFO'] = '/liquor_types'
-        elif '/convert_to_ml' in data[4:]:
-            environ['PATH_INFO'] = '/convert_to_ml'
-        elif '/add_recipe' in data[4:]:
-            environ['PATH_INFO'] = '/add_recipe'
-        elif '/add_liquor_type' in data[4:]:
-            environ['PATH_INFO'] = '/add_liquor_type'
-        elif '/add_to_inventory' in data[4:]:
-            environ['PATH_INFO'] = '/add_to_inventory'
-        elif '/login_1' in data[4:]:
-            environ['PATH_INFO'] = '/login_1'
-        elif '/login1_process' in data[4:]:
-            environ['PATH_INFO'] = '/login1_process'
-        elif '/logout' in data[4:]:
-            environ['PATH_INFO'] = '/logout'
-        elif '/status' in data[4:]:
-            environ['PATH_INFO'] = '/status'
-        elif '/' in data[5:]:
-            environ['PATH_INFO'] = '/'
-        else:
-            environ['PATH_INFO'] = '/error'
+        if '?' in reqPath:
+            reqPath, reqQueryString = reqPath.split('?', 1)
+            environ['QUERY_STRING'] = reqQueryString
+
+        environ['PATH_INFO'] = reqPath
 
         #Build up a response
         html = app_obj(environ, my_start_response)
