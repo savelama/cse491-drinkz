@@ -93,9 +93,16 @@ while True:
         status += d['status']
         status +='\n'
 
+        responseHeaders = []
+        for key, value in d['headers']:
+            responseHeaders.append(key + ": " + value)
+
+        response = "\r\n".join(responseHeaders) + "\r\n\r\n" + "".join(html) 
+
         #Send response
         c.send(status)
-        c.send(html[0])
+        #c.send(html[0])
+        c.send(response)
 
 
     else:
